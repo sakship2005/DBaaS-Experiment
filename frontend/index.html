@@ -1,58 +1,72 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>DBaaS E-Learning</title>
-    <link rel="stylesheet" href="style.css">
+    <meta charset="UTF-8">
+    <title>E-Learning DBaaS</title>
 </head>
 <body>
-    <h1>E-Learning DBaaS Platform</h1>
+    <h1>E-Learning Platform - DBaaS Demo</h1>
 
-    <h2>Students</h2>
-    <form action="/add_student" method="POST">
-        Name: <input type="text" name="name" required>
-        Email: <input type="email" name="email" required>
-        <button type="submit">Add Student</button>
-    </form>
-
-    <h2>Courses</h2>
-    <form action="/add_course" method="POST">
-        Course Name: <input type="text" name="course_name" required>
-        Instructor: <input type="text" name="instructor" required>
-        <button type="submit">Add Course</button>
-    </form>
-
-    <h2>Enroll Student</h2>
-    <form action="/enroll" method="POST">
-        Student ID: <input type="number" name="student_id" required>
-        Course ID: <input type="number" name="course_id" required>
-        <button type="submit">Enroll</button>
-    </form>
-
-    <h2>Payments</h2>
-    <form action="/add_payment" method="POST">
-        Student ID: <input type="number" name="student_id" required>
-        Amount: <input type="number" step="0.01" name="amount" required>
-        <button type="submit">Add Payment</button>
-    </form>
-
-    <h2>Student Enrolments & Payments</h2>
-    <table>
+    <h2>Students & Enrolments</h2>
+    <table border="1" cellpadding="5">
         <tr>
-            <th>Student ID</th>
-            <th>Name</th>
-            <th>Course</th>
-            <th>Payment</th>
-            <th>Payment Date</th>
+            <th>ID</th><th>Name</th><th>Email</th><th>Enrolled</th>
+            <th>Course</th><th>Payment</th><th>Payment Date</th>
         </tr>
         {% for s in students %}
         <tr>
-            <td>{{ s.student_id }}</td>
-            <td>{{ s.student_name }}</td>
-            <td>{{ s.course_name }}</td>
-            <td>{{ s.amount }}</td>
-            <td>{{ s.payment_date }}</td>
+            <td>{{ s['student_id'] }}</td>
+            <td>{{ s['student_name'] }}</td>
+            <td>{{ s['email'] }}</td>
+            <td>{{ s['enrollment_date'] }}</td>
+            <td>{{ s['course_name'] }}</td>
+            <td>{{ s['amount'] }}</td>
+            <td>{{ s['payment_date'] }}</td>
         </tr>
         {% endfor %}
     </table>
+
+    <h2>Add Student</h2>
+    <form method="post" action="/add_student">
+        Name: <input type="text" name="name" required>
+        Email: <input type="email" name="email" required>
+        <button type="submit">Add</button>
+    </form>
+
+    <h2>Add Course</h2>
+    <form method="post" action="/add_course">
+        Course: <input type="text" name="course_name" required>
+        Instructor: <input type="text" name="instructor" required>
+        <button type="submit">Add</button>
+    </form>
+
+    <h2>Enroll Student</h2>
+    <form method="post" action="/enroll">
+        Student:
+        <select name="student_id">
+            {% for s in all_students %}
+                <option value="{{ s['student_id'] }}">{{ s['name'] }}</option>
+            {% endfor %}
+        </select>
+        Course:
+        <select name="course_id">
+            {% for c in all_courses %}
+                <option value="{{ c['course_id'] }}">{{ c['course_name'] }}</option>
+            {% endfor %}
+        </select>
+        <button type="submit">Enroll</button>
+    </form>
+
+    <h2>Add Payment</h2>
+    <form method="post" action="/add_payment">
+        Student:
+        <select name="student_id">
+            {% for s in all_students %}
+                <option value="{{ s['student_id'] }}">{{ s['name'] }}</option>
+            {% endfor %}
+        </select>
+        Amount: <input type="number" step="0.01" name="amount" required>
+        <button type="submit">Add Payment</button>
+    </form>
 </body>
 </html>
