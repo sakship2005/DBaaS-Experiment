@@ -1,36 +1,41 @@
 from flask import Flask, render_template, request, redirect
-import mysql.connector
+import sqlite3
 
 app = Flask(__name__, template_folder="../frontend")
 
 # Database connection
 def get_db_connection():
-    return mysql.connector.connect(
-        host='localhost',      # your DB host / RDS endpoint
-        database='elearning',  # your database name
-        user='root',           # your DB username
-        password='password'    # your DB password
-    )
+    conn = sqlite3.connect("elearning.db")
+    conn.row_factory = sqlite3.Row
+    return conn
 
 # Home page
 @app.route('/')
 def index():
     conn = get_db_connection()
-    cursor = conn.cursor(dictionary=True)
-    
+    cursor = conn.cursor()
+
     # Join tables to show student enrolments
     cursor.execute("""
-        SELECT s.student_id, s.name AS student_name, c.course_name, p.amount, p.payment_date
+        SELECT s.student_id, s.name AS student_name, s.email, s.enrollment_date,
+               c.course_name, p.amount, p.payment_date
         FROM students s
         LEFT JOIN enrolments e ON s.student_id = e.student_id
         LEFT JOIN courses c ON e.course_id = c.course_id
         LEFT JOIN payments p ON s.student_id = p.student_id
     """)
     data = cursor.fetchall()
-    cursor.close()
+
+    # fetch courses for dropdowns
+    cursor.execute("SELECT * FROM courses")
+    courses = cursor.fetchall()
+
+    # fetch students for dropdowns
+    cursor.execute("SELECT * FROM students")
+    students = cursor.fetchall()
+
     conn.close()
-    
-    return render_template("index.html", students=data)
+    return render_template("index.html", students=data, all_courses=courses, all_students=students)
 
 # Add a student
 @app.route('/add_student', methods=['POST'])
@@ -40,9 +45,8 @@ def add_student():
 
     conn = get_db_connection()
     cursor = conn.cursor()
-    cursor.execute("INSERT INTO students (name, email, enrollment_date) VALUES (%s, %s, CURDATE())", (name, email))
+    cursor.execute("INSERT INTO students (name, email) VALUES (?, ?)", (name, email))
     conn.commit()
-    cursor.close()
     conn.close()
     return redirect('/')
 
@@ -54,9 +58,8 @@ def add_course():
 
     conn = get_db_connection()
     cursor = conn.cursor()
-    cursor.execute("INSERT INTO courses (course_name, instructor) VALUES (%s, %s)", (course_name, instructor))
+    cursor.execute("INSERT INTO courses (course_name, instructor) VALUES (?, ?)", (course_name, instructor))
     conn.commit()
-    cursor.close()
     conn.close()
     return redirect('/')
 
@@ -68,9 +71,8 @@ def enroll():
 
     conn = get_db_connection()
     cursor = conn.cursor()
-    cursor.execute("INSERT INTO enrolments (student_id, course_id) VALUES (%s, %s)", (student_id, course_id))
+    cursor.execute("INSERT INTO enrolments (student_id, course_id) VALUES (?, ?)", (student_id, course_id))
     conn.commit()
-    cursor.close()
     conn.close()
     return redirect('/')
 
@@ -82,11 +84,10 @@ def add_payment():
 
     conn = get_db_connection()
     cursor = conn.cursor()
-    cursor.execute("INSERT INTO payments (student_id, amount, payment_date) VALUES (%s, %s, CURDATE())", (student_id, amount))
+    cursor.execute("INSERT INTO payments (student_id, amount) VALUES (?, ?)", (student_id, amount))
     conn.commit()
-    cursor.close()
     conn.close()
     return redirect('/')
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(debug=True, port=5000)
